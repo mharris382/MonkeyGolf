@@ -72,3 +72,7 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+VRMonkeyGolf/Intermediate/
+
+VRMonkeyGolf/Saved/webcache_6613/

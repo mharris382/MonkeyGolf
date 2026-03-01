@@ -25,6 +25,22 @@
 		{
 			"Name": "OpenXRHandTracking",
 			"Enabled": true
+		},
+		{
+			"Name": "PCGExtendedToolkit",
+			"Enabled": false
+		},
+		{
+			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "PCGGeometryScriptInterop",
+			"Enabled": true
+		},
+		{
+			"Name": "GeometryScripting",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [

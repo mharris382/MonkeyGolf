@@ -81,4 +81,8 @@ VRMonkeyGolf/Binaries/
 
 VRMonkeyGolf/Saved/
 
+*/Binaries/*/Build/
+
+VRMonkeyGolf/Plugins/MiniGolfVR/Intermediate/
+VRMonkeyGolf/Plugins/*/Binaries/*
 VRMonkeyGolf/Build/

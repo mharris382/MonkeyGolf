@@ -1,0 +1,91 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "VRGolf",
+    "Description": "",
+    "Category": "Other",
+    "CreatedBy": "Max Harris",
+    "CreatedByURL": "",
+    "DocsURL": "",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": true,
+    "IsBetaVersion": false,
+    "IsExperimentalVersion": false,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "PCGHelpers",
+            "Type": "Developer",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "VRGolf",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "VRGolfEditor",
+            "Type": "Editor",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "VRGolfEnviornment",
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "Description": "Base C++ classes and Custom PCG Elements for implementing PCG course generation"
+        },
+        {
+            "Name": "VRGolfFeedbacks",
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "Description": "Golfing feedbacks system"
+        },
+        {
+            "Name": "VRGolfPlayer",
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "Description": "C++ classes for VR golfing pawn"
+        },
+        {
+            "Name": "VRGolfTesting",
+            "Type": "Developer",
+            "LoadingPhase": "Default"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "XRBase",
+            "Enabled": true
+        },
+        {
+            "Name": "EnhancedInput",
+            "Enabled": true
+        },
+        {
+            "Name": "PCG",
+            "Enabled": true
+        },
+        {
+            "Name": "Niagara",
+            "Enabled": true
+        },
+        {
+            "Name": "GeometryScripting",
+            "Enabled": true
+        },
+        {
+            "Name": "PCGRuntimeUtils",
+            "Enabled": true
+        },
+        {
+            "Name": "PCGGeometryScriptInterop",
+            "Enabled": true
+        },
+        {
+            "Name": "VRExpansionPlugin",
+            "Enabled": true
+        }
+    ]
+}

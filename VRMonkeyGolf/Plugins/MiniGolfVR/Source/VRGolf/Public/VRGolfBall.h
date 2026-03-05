@@ -64,6 +64,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Golf")
     void ResetToPosition(const FVector& Position, EBallResetReason Reason);
 
+    void ResetBallToLastPosition(EBallResetReason Reason)
+    {
+		ResetToPosition(LastValidPosition, Reason);
+    }
+
     UFUNCTION(BlueprintCallable, Category = "Golf")
     bool IsValidForStroke() const;
 
@@ -84,6 +89,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Golf")
 	void SetBallStateBP(EBallState NewState, bool forceSendEvents = false);
     
+    UFUNCTION(BlueprintCallable, Category = "Golf")
+	FVector GetLastIdleLocation() const { return LastValidPosition; }
+
 
 protected:
     virtual void BeginPlay() override;
@@ -193,6 +201,8 @@ protected:
 
 
     private:
+
+    
 
     void BroadcastBallStopped()
     {

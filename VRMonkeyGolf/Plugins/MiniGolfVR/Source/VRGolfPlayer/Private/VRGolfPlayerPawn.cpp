@@ -42,7 +42,7 @@ void AVRGolfPlayerPawn::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Add input mapping context
+    /* Add input mapping context
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -54,6 +54,11 @@ void AVRGolfPlayerPawn::BeginPlay()
             }
         }
     }
+    
+    UE_LOG(LogTemp, Warning, TEXT("BeginPlay - Controller: %s, InputComponent: %s"),
+        GetController() ? TEXT("VALID") : TEXT("NULL"),
+        InputComponent ? TEXT("VALID") : TEXT("NULL"));
+		*/
 
     // Spawn the putter on the default active hand (Right)
     SpawnAndAttachPutter();
@@ -74,6 +79,25 @@ void AVRGolfPlayerPawn::Tick(float DeltaTime)
 void AVRGolfPlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+    // Add mapping context HERE — InputComponent is guaranteed valid at this point
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+        {
+            if (GolfMappingContext)
+            {
+                Subsystem->ClearAllMappings();  // defensive: clear stale contexts
+                Subsystem->AddMappingContext(GolfMappingContext, 0);
+                UE_LOG(LogTemp, Warning, TEXT("Golf mapping context added successfully"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("GolfMappingContext is NULL — assign it in the BP subclass defaults"));
+            }
+        }
+    }
 
     UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
     if (!EIC) return;

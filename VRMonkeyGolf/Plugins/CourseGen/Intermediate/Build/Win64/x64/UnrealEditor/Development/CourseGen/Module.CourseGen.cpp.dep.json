@@ -3,11 +3,13 @@
     "Data": {
         "Source": "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\plugins\\coursegen\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\coursegen\\module.coursegen.cpp",
         "ProvidedModule": "",
-        "PCH": "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\intermediate\\build\\win64\\x64\\vrmonkeygolfeditor\\development\\unrealed\\sharedpch.unrealed.cpp20.h.pch",
+        "PCH": "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\intermediate\\build\\win64\\x64\\vrmonkeygolfeditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.inclorderunreal5_4.h.pch",
         "Includes": [
             "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\plugins\\coursegen\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\coursegen\\definitions.coursegen.h",
             "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\plugins\\coursegen\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\coursegen\\permoduleinline.gen.cpp",
-            "b:\\unrealengine\\ue_5.7\\engine\\source\\runtime\\core\\public\\hal\\permoduleinline.inl"
+            "b:\\unrealengine\\ue_5.7\\engine\\source\\runtime\\core\\public\\hal\\permoduleinline.inl",
+            "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\plugins\\coursegen\\source\\coursegen\\private\\coursegen.cpp",
+            "b:\\unrealengine5_projects\\_repos6\\monkeygolf\\vrmonkeygolf\\plugins\\coursegen\\source\\coursegen\\public\\coursegen.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

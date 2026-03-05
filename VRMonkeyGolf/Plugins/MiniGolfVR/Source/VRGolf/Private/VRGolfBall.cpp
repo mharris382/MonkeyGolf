@@ -53,7 +53,7 @@ void AVRGolfBall::SetBallStateBP(EBallState NewState, bool forceSendEvents)
 void AVRGolfBall::BeginPlay()
 {
     Super::BeginPlay();
-
+	
     // Bind collision events
     CollisionSphere->OnComponentHit.AddDynamic(this, &AVRGolfBall::OnBallHit);
     CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AVRGolfBall::OnBallBeginOverlap);

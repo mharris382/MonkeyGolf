@@ -4,3 +4,6 @@
 [submodule "VRMonkeyGolf/Plugins/ISMRuntimeUtils"]
 	path = VRMonkeyGolf/Plugins/ISMRuntimeUtils
 	url = https://github.com/mharris382/PCGRuntimeUtilities.git
+[submodule "VRMonkeyGolf/Plugins/PCGUtils"]
+	path = VRMonkeyGolf/Plugins/PCGUtils
+	url = https://github.com/mharris382/PCGUtils.git

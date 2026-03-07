@@ -1,9 +1,0 @@
-{
-	"RemapUnityFiles": 
-	{
-		"Module.CourseGen.cpp.obj": [
-			"PerModuleInline.gen.cpp.obj",
-			"CourseGen.cpp.obj"
-		]
-	}
-}

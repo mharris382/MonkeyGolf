@@ -28,7 +28,7 @@
 		},
 		{
 			"Name": "PCGExtendedToolkit",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "PCG",

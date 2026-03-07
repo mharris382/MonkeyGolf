@@ -4,6 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "VRFloorProxy.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
@@ -43,8 +44,39 @@ AVRGolfBall::AVRGolfBall()
     StuckCheckTimer = 0.0f;
     LastPositionCheck = FVector::ZeroVector;
     bDisableAirborneTimeout = false;
+
+    FloorProxyClass = AVRFloorProxy::StaticClass(); // Safe default so it works out of the box
 }
 
+AVRFloorProxy* AVRGolfBall::GetFloorProxy()
+{
+    if (!FloorProxy)
+    {
+        UClass* SpawnClass = FloorProxyClass ? FloorProxyClass : TSubclassOf<AVRFloorProxy>(AVRFloorProxy::StaticClass());
+
+        FActorSpawnParameters Params;
+        Params.Owner = this;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        FloorProxy = GetWorld()->SpawnActor<AVRFloorProxy>(SpawnClass,
+           GetFloorSurfaceLocation(), FRotator::ZeroRotator, Params);
+		FloorProxy->OnBallAssigned(this);
+    }
+    return FloorProxy;
+}
+
+FVector AVRGolfBall::GetFloorSurfacePlane() const
+{
+    if (FloorProxy)
+        return FloorProxy->GetFloorSurfacePlane();
+    return FVector::UpVector; // Safe default before proxy exists
+}
+
+FVector AVRGolfBall::GetFloorSurfaceLocation() const
+{
+    if(!CollisionSphere)
+		return GetActorLocation();
+    return FVector(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z - CollisionSphere->GetScaledSphereRadius());
+}
 void AVRGolfBall::SetBallStateBP(EBallState NewState, bool forceSendEvents)
 {
 	SetBallState(NewState, forceSendEvents);
@@ -89,6 +121,12 @@ void AVRGolfBall::UpdateBallState(float DeltaTime)
     switch (CurrentState)
     {
         case EBallState::Idle:
+
+            if (FloorProxy)
+            {
+                
+                FloorProxy->SetActorLocation(GetFloorSurfaceLocation());
+            }
             // Ball is waiting for stroke, nothing to update
             break;
 
@@ -105,6 +143,7 @@ void AVRGolfBall::UpdateBallState(float DeltaTime)
             // Resetting is handled by ResetToPosition, nothing to update
             break;
     }
+
 }
 
 void AVRGolfBall::CheckResetConditions(float DeltaTime)
@@ -134,7 +173,6 @@ void AVRGolfBall::CheckIfStopped(float DeltaTime)
         if (bIsOnPuttableSurface)
         {
             // Valid stop - transition to Idle for next stroke
-            CurrentState = EBallState::Idle;
             LastValidPosition = GetActorLocation();
 
             // Zero out any remaining velocity
@@ -142,6 +180,9 @@ void AVRGolfBall::CheckIfStopped(float DeltaTime)
             CollisionSphere->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 
             UE_LOG(LogTemp, Log, TEXT("Ball stopped on valid surface at %s"), *GetActorLocation().ToString());
+
+            SetBallState(EBallState::Idle);
+			BroadcastBallStopped();
         }
         else
         {
@@ -172,6 +213,7 @@ void AVRGolfBall::CheckAirborneTime(float DeltaTime)
 
     if (!bIsGrounded)
     {
+        if (FloorProxy) FloorProxy->NotifyAirborne();
         TimeInAir += DeltaTime;
 
         // Check if exceeded max airborne time (unless disabled for trick shots)
@@ -182,6 +224,14 @@ void AVRGolfBall::CheckAirborneTime(float DeltaTime)
     }
     else
     {
+        if (FloorProxy)
+        {
+            // You'll want a real HitResult here eventually — passing a blank for now
+            // swap this out when you wire up the surface hit result
+            FHitResult GroundHit;
+            FloorProxy->NotifyLanded(GroundHit);
+            FloorProxy->UpdateFromFloorHit(GetFloorSurfaceLocation(),GroundHit);
+        }
         // Reset airborne timer when grounded
         TimeInAir = 0.0f;
     }
@@ -250,26 +300,35 @@ void AVRGolfBall::ApplyStroke(const FVector& ImpulseDirection, float ImpulseMagn
         return;
     }
 
+    // Update state
+    CurrentStrokes++;
+
     // Apply impulse
     FVector NormalizedDirection = ImpulseDirection.GetSafeNormal();
     FVector Impulse = NormalizedDirection * ImpulseMagnitude;
 
-    if (CollisionSphere)
-    {
-        CollisionSphere->AddImpulse(Impulse, NAME_None, true);
-    }
+    
+   
 
-    // Update state
-    CurrentState = EBallState::InMotion;
-    CurrentStrokes++;
     TimeInAir = 0.0f;
     TimeSinceLastMovement = 0.0f;
     StuckCheckTimer = 0.0f;
     LastPositionCheck = GetActorLocation();
 
+    if (CollisionSphere)
+    {
+        CollisionSphere->AddImpulse(Impulse, NAME_None, true);
+    }
+    OnStrokeApplied(Impulse, CurrentStrokes);
+
+	SetBallState(EBallState::InMotion);
+	BroadcasBallStruck(ImpulseDirection * ImpulseMagnitude);
+    
     UE_LOG(LogTemp, Log, TEXT("Stroke applied! Impulse: %s, Magnitude: %.2f, Strokes: %d"), 
            *Impulse.ToString(), ImpulseMagnitude, CurrentStrokes);
 }
+
+void AVRGolfBall::OnStrokeApplied_Implementation(const FVector& Impulse, int32 StrokeNumber){ }
 
 void AVRGolfBall::Server_ApplyStroke_Implementation(const FVector& ImpulseDirection, float ImpulseMagnitude)
 {
@@ -298,7 +357,7 @@ void AVRGolfBall::ResetToPosition(const FVector& Position, EBallResetReason Reas
     }
 
     // Reset state
-    CurrentState = EBallState::Idle;
+	SetBallState(EBallState::Resetting);
     TimeInAir = 0.0f;
     TimeSinceLastMovement = 0.0f;
     StuckCheckTimer = 0.0f;
@@ -307,6 +366,9 @@ void AVRGolfBall::ResetToPosition(const FVector& Position, EBallResetReason Reas
 
     // Notify clients
     Multicast_OnBallReset(Reason);
+	BroadcastBallReset(Reason);
+
+    SetBallState(EBallState::Idle);
 }
 
 void AVRGolfBall::Server_ResetBall_Implementation(const FVector& Position, EBallResetReason Reason)
@@ -359,7 +421,8 @@ void AVRGolfBall::OnBallBeginOverlap(UPrimitiveComponent* OverlappedComponent,
     // Check for hole trigger (completion)
     if (OtherActor->ActorHasTag(TEXT("HoleTrigger")))
     {
-        CurrentState = EBallState::Completed;
+		SetBallState(EBallState::Completed, true);
+		BroadcastBallHoled();
         Multicast_OnBallCompleted();
         
         UE_LOG(LogTemp, Log, TEXT("Ball completed hole in %d strokes!"), CurrentStrokes);
@@ -372,6 +435,7 @@ void AVRGolfBall::OnBallBeginOverlap(UPrimitiveComponent* OverlappedComponent,
     if (OtherActor->ActorHasTag(TEXT("OutOfBounds")))
     {
         ResetToPosition(LastValidPosition, EBallResetReason::OutOfBounds);
+        
         return;
     }
 

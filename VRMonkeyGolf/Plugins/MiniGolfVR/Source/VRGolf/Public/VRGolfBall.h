@@ -38,7 +38,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBallStateChanged, class AVRGol
 
 
 
-/**
+/**yeah do
  * VR Golf Ball - Main gameplay actor with physics simulation
  * Implements all Walkabout Mini Golf ball rules:
  * - Valid stop detection (on puttable surface + velocity threshold)
@@ -92,6 +92,30 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Golf")
 	FVector GetLastIdleLocation() const { return LastValidPosition; }
 
+
+    // Called after a stroke is successfully applied. Override in BP for feedback/audio/VFX.
+    UFUNCTION(BlueprintNativeEvent, Category = "Golf|Events")
+    void OnStrokeApplied(const FVector& ImpulseApplied, int32 StrokeNumber);
+    virtual void OnStrokeApplied_Implementation(const FVector& ImpulseApplied, int32 StrokeNumber);
+
+
+    // Lazy-created floor proxy — spawned on first call
+    UFUNCTION(BlueprintCallable, Category = "Golf|FloorProxy")
+    class AVRFloorProxy* GetFloorProxy();
+
+    // Returns floor surface up vector — safe in air (returns last known normal)
+    UFUNCTION(BlueprintCallable, Category = "Golf|FloorProxy")
+    FVector GetFloorSurfacePlane() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Golf|FloorProxy")
+    FVector GetFloorSurfaceLocation() const;
+
+private:
+    UPROPERTY()
+    AVRFloorProxy* FloorProxy = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Golf|FloorProxy")
+    TSubclassOf<AVRFloorProxy> FloorProxyClass;
 
 protected:
     virtual void BeginPlay() override;

@@ -37,6 +37,7 @@ public class VRGolf : ModuleRules
 				"SlateCore",
 				"DeveloperSettings",
 				"PhysicsCore"
+                
 			}
 			);
 			
@@ -44,7 +45,7 @@ public class VRGolf : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				
+                
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

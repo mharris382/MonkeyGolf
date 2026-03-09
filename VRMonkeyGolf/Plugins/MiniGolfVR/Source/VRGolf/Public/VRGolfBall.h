@@ -162,6 +162,8 @@ protected:
     UPROPERTY(BlueprintReadWrite, Category = "Golf|Movement")
     bool bDisableAirborneTimeout = false;
 
+
+
     // Internal tracking
     float TimeInAir;
     float TimeSinceLastMovement;
@@ -266,4 +268,7 @@ protected:
 
     bool bStateSetCalled = false;
     AActor* LastHoleReached;
+
+
+    void PreventRampSleep();
 };

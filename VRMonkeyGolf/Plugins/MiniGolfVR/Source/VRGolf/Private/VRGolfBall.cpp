@@ -114,6 +114,7 @@ void AVRGolfBall::Tick(float DeltaTime)
         return;
 
     UpdateBallState(DeltaTime);
+	PreventRampSleep();
 }
 
 void AVRGolfBall::UpdateBallState(float DeltaTime)
@@ -264,6 +265,36 @@ void AVRGolfBall::CheckIfStuck(float DeltaTime)
         // Update for next check
         LastPositionCheck = CurrentPosition;
         StuckCheckTimer = 0.0f;
+    }
+}
+
+static constexpr float SlopeWakeThreshold = 0.99998f; // ~0.5 degrees
+
+void AVRGolfBall::PreventRampSleep()
+{
+    if (!BallMesh->RigidBodyIsAwake())
+    {
+        // Check slope angle — get the surface normal below the ball
+        FHitResult Hit;
+        const FVector Start = GetActorLocation();
+        const FVector End = Start + FVector(0.f, 0.f, -50.f);
+
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+
+        if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End,
+            ECC_WorldStatic, Params))
+        {
+            // Dot of surface normal with world up — 1.0 = flat, 0.0 = vertical
+            const float SlopeDot = FVector::DotProduct(Hit.Normal, FVector::UpVector);
+
+            // Wake if slope steeper than threshold (cos(5 deg) = 0.9962)
+            if (SlopeDot < SlopeWakeThreshold)
+            {
+                BallMesh->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+                BallMesh->WakeAllRigidBodies();
+            }
+        }
     }
 }
 

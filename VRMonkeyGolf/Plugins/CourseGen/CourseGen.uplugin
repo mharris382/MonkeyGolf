@@ -1,24 +1,48 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "CourseGen",
-	"Description": "",
-	"Category": "Other",
-	"CreatedBy": "Max Harris",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"CanContainContent": true,
-	"IsBetaVersion": false,
-	"IsExperimentalVersion": false,
-	"Installed": false,
-	"Modules": [
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "CourseGen",
+    "Description": "",
+    "Category": "Other",
+    "CreatedBy": "Max Harris",
+    "CreatedByURL": "",
+    "DocsURL": "",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": true,
+    "IsBetaVersion": false,
+    "IsExperimentalVersion": false,
+    "Installed": true,
+    "Modules": [
+        {
+            "Name": "CourseGen",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "CourseGenCore",
+            "Type": "UncookedOnly",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "CourseGenRuntime",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ],
+     "Plugins": [
+        {
+			"Name": "PCG",
+			"Enabled": true
+		},
 		{
-			"Name": "CourseGen",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"Name": "GeometryScripting",
+			"Enabled": true
+		},
+		{
+			"Name": "PCGGeometryScriptInterop",
+			"Enabled": true
 		}
-	]
+  ]
 }

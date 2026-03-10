@@ -21,7 +21,10 @@ OUTPUT_MODULE_DEFINITIONS: Dict[str, List] = {
     "VRGolfPlayer":        [True,  "C++ classes for VR golfing pawn", ["EnhancedInput", "XRBase", "VRExpansionPlugin"], []],
     "VRGolfFeedbacks":        [True,  "Golfing feedbacks system", ["ISMRuntimeFeedbacks", "Niagara"], []],
     "VRGolfEditor":        [False,  "", ["UnrealEd", "PCG", "VRGolfEnviornment", "VRGolf"], []],
-    "VRGolfTesting":        [False,  "", ["UnrealEd", "PCG", "VRGolfEnviornment", "VRGolf", "GameplayTags", "PhysicsCore", "EnvironmentQueryEditor", "AIModule", "NavigationSystem", "GameplayTasks"], []],
+    "VRGolfTesting":        [False,  "", ["UnrealEd", "PCG", "VRGolfEnviornment", "VRGolf", "GameplayTags", "PhysicsCore"], []],
+    "VRGolfSave":        [True,  "", [], []],
+    "VRGolfOnline":        [True,  "", ["OnlineSubsystem", "OnlineSubsystemEOS", "OnlineSubsystemUtils", "VRGolfSave"], []],
+    "VRGolfUI":        [True,  "", ["Slate"], []],
     "PCGHelpers" :       [False,  "", ["PCG"], []]
     #"VRGolf":        [True,  "", ["", "", ""], []]
 }

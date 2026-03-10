@@ -49,6 +49,21 @@
             "Description": "C++ classes for VR golfing pawn"
         },
         {
+            "Name": "VRGolfSave",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "VRGolfUI",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "VRGolfOnline",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
             "Name": "VRGolfTesting",
             "Type": "Developer",
             "LoadingPhase": "Default"
@@ -85,6 +100,18 @@
         },
         {
             "Name": "VRExpansionPlugin",
+            "Enabled": true
+        },
+        {
+            "Name": "OnlineSubsystem",
+            "Enabled": true
+        },
+        {
+            "Name": "OnlineSubsystemEOS",
+            "Enabled": true
+        },
+        {
+            "Name": "OnlineSubsystemUtils",
             "Enabled": true
         }
     ]

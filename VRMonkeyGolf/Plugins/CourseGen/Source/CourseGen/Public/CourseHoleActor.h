@@ -9,8 +9,6 @@
 #include "CourseHoleActor.generated.h"
 
 class UPCGComponent;
-class UDynamicMeshComponent;
-class UInstancedStaticMeshComponent;
 class UStaticMeshComponent;
 
 UENUM(BlueprintType)
@@ -25,19 +23,14 @@ enum class ECandidateSelectionMode : uint8
 /**
  * ACourseHoleActor
  *
- * Single actor representing one mini golf hole in the level.
+ * Data boundary class for one mini golf hole.
+ * Owns all data the pipeline needs — does not execute any of it.
  *
- * Responsibilities:
- *   Runtime  — reads UCourseHoleDataAsset, manages ISM patch visibility,
- *               exposes cup candidate selection to MonkeyGolfCore
- *   Editor   — maintains dynamic mesh preview from PCG output,
- *               bakes to static mesh asset on demand (WITH_EDITOR only)
+ * At cook time: PCG reads CourseGenData and writes results back via HoleData.
+ * At runtime:   MonkeyGolfCore reads the exposed API to drive gameplay.
  *
- * Placed once per hole in the level. Driven by a PCGComponent on the
- * same actor whose graph fulfills the V0 CourseGen tag contract.
- *
- * MonkeyGolfCore interacts via BlueprintNativeEvent hooks and
- * BlueprintCallable interface. No reverse dependency into MonkeyGolfCore.
+ * This class does not bake, preview, spawn, or manage any components actively.
+ * PCG owns the cook pipeline. MonkeyGolfCore owns the runtime behavior.
  */
 UCLASS(HideCategories = (Replication, Networking, Input))
 class COURSEGEN_API ACourseHoleActor : public AActor
@@ -52,19 +45,21 @@ public:
 	virtual void BeginPlay() override;
 	//~ End AActor interface
 
-	// #region Configuration
+	// #region Data
+
+	/** Visual + physics configuration shared across all holes on this course. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole")
 	TObjectPtr<UCourseGenDataAsset> CourseGenData;
 
 	/**
-	 * Data asset written by the bake operation.
+	 * Output data asset produced by the PCG bake pipeline.
+	 * Contains baked green mesh ref, tee transform, and cup candidate slots.
 	 * Read at BeginPlay to populate runtime state.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole")
 	TObjectPtr<UCourseHoleDataAsset> HoleData;
 
-
-	/** Index of this hole within the course. */
+	/** Index of this hole within the course. Used by PCG and runtime systems. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole")
 	int32 HoleIndex = 0;
 
@@ -74,15 +69,11 @@ public:
 
 	/**
 	 * How the active cup candidate is chosen at BeginPlay.
-	 * Set to External if MonkeyGolfCore will call ActivateCupCandidate directly.
+	 * External = MonkeyGolfCore calls ActivateCupCandidate directly.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CourseHole|Selection")
 	ECandidateSelectionMode SelectionMode = ECandidateSelectionMode::Random;
 
-	/**
-	 * Seed used when SelectionMode == Seeded.
-	 * Same seed produces the same candidate selection every session.
-	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CourseHole|Selection",
 		meta = (EditCondition = "SelectionMode==ECandidateSelectionMode::Seeded"))
 	int32 ExplicitSeed = 0;
@@ -90,106 +81,77 @@ public:
 	// #endregion
 
 	// #region Runtime Interface
+	// Read-only accessors into HoleData. MonkeyGolfCore calls these.
+	// All return empty/identity if HoleData is not assigned.
 
-	/** Returns all available cup candidate transforms for this hole. */
+	/** All available cup candidate transforms for this hole. */
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
 	TArray<FTransform> GetCupCandidates() const;
 
-	/** Returns the tee spawn transform. */
+	/** Tee spawn transform. */
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
 	FTransform GetTeeTransform() const;
 
+	/** Currently active candidate index. INDEX_NONE if not yet activated. */
+	UFUNCTION(BlueprintCallable, Category = "CourseHole")
+	int32 GetActiveCandidateIndex() const { return ActiveCandidateIndex; }
+
+	/** True if a candidate has been activated. */
+	UFUNCTION(BlueprintCallable, Category = "CourseHole")
+	bool IsActivated() const { return ActiveCandidateIndex != INDEX_NONE; }
+
 	/**
-	 * Activates a specific cup candidate by index.
-	 * Hides the corresponding ISM patch, broadcasts OnCandidateActivated.
-	 * No-op if already activated — call ResetActivation first to reselect.
+	 * Records the chosen candidate index.
+	 * Does not spawn anything — notifies via OnCandidateActivated for
+	 * MonkeyGolfCore to act on.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
 	void ActivateCupCandidate(int32 Index);
 
-	/** Resets activation state — allows re-selection. */
+	/** Clears activation state. Allows re-selection. */
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
 	void ResetActivation();
 
-	/** Returns the currently active candidate index. INDEX_NONE if not yet activated. */
+	/**
+	 * Resolves which candidate index to use based on SelectionMode.
+	 * Returns INDEX_NONE if External or no candidates available.
+	 * MonkeyGolfCore can call this to get the recommended index,
+	 * then pass it to ActivateCupCandidate.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
-	int32 GetActiveCandidateIndex() const { return ActiveCandidateIndex; }
-
-	/** Returns true if a candidate has been activated. */
-	UFUNCTION(BlueprintCallable, Category = "CourseHole")
-	bool IsActivated() const { return ActiveCandidateIndex != INDEX_NONE; }
+	int32 ResolveAutoIndex() const;
 
 	// #endregion
 
 	// #region BlueprintNativeEvent Hooks
 
 	/**
-	 * Called after a candidate is successfully activated.
-	 * MonkeyGolfCore BP subclass overrides this to spawn the cup actor,
-	 * place the ball trigger, etc.
+	 * Called when ActivateCupCandidate records a valid selection.
+	 * MonkeyGolfCore BP subclass overrides to spawn cup actor,
+	 * hide ISM patch, set up ball trigger, etc.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "CourseHole")
 	void OnCandidateActivated(int32 Index, FTransform CupTransform);
-	virtual void OnCandidateActivated_Implementation(
-		int32 Index, FTransform CupTransform) {
-	}
+	virtual void OnCandidateActivated_Implementation(int32 Index, FTransform CupTransform) {}
 
 	/**
-	 * Called if required contract data is missing at BeginPlay.
-	 * Override to handle gracefully in BP — log, show placeholder, etc.
+	 * Called at BeginPlay if HoleData is missing or invalid.
+	 * Override to handle gracefully — show placeholder, log, etc.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "CourseHole")
-	void OnContractValidationFailed(FName MissingTag);
-	virtual void OnContractValidationFailed_Implementation(FName MissingTag) {}
+	void OnHoleDataMissing();
+	virtual void OnHoleDataMissing_Implementation() {}
 
 	// #endregion
-
-	// #region Editor Bake Interface
-#if WITH_EDITOR
-
-	/**
-	 * Returns existing HoleData asset or creates a new one.
-	 * Called by the bake pipeline to get a writable data asset target.
-	 */
-	UCourseHoleDataAsset* GetOrCreateHoleDataAsset();
-
-	/** Bakes current PCG output to a static mesh asset. Expensive — manual trigger. */
-	UFUNCTION(CallInEditor, Category = "CourseHole|Bake")
-	void BakeToStaticMesh();
-
-	/** Rebuilds dynamic mesh preview from current PCG output. Fast — safe to call freely. */
-	UFUNCTION(CallInEditor, Category = "CourseHole|Bake")
-	void UpdatePreview();
-
-	/** Clears the dynamic mesh preview. */
-	UFUNCTION(CallInEditor, Category = "CourseHole|Bake")
-	void ClearPreview();
-
-	//~ Begin AActor interface (editor)
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostRegisterAllComponents() override;
-	virtual void BeginDestroy() override;
-	//~ End AActor interface (editor)
-
-#endif // WITH_EDITOR
-	// #endregion
-
-protected:
 
 	// #region Components
+	// Present but passive — MonkeyGolfCore or PCG drives them, not this class.
 
-	/** Displays the baked static mesh green at runtime. */
+	/** Displays the baked static mesh green. Assigned by PCG bake pipeline. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CourseHole|Components")
 	TObjectPtr<UStaticMeshComponent> GreenMeshComponent;
 
-	/** ISM holding all patch instances. All visible initially; active candidate hidden at runtime. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CourseHole|Components")
-	TObjectPtr<UInstancedStaticMeshComponent> PatchISM;
-
-	/**
-	 * PCG component driving the course gen graph.
-	 * Present in all builds — runtime PCG graph reads its output for patch hiding.
-	 */
+	/** PCG component. Graph authored externally — this class does not trigger it. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CourseHole|Components")
 	TObjectPtr<UPCGComponent> PCGComponent;
 
@@ -199,60 +161,13 @@ private:
 
 	// #region Runtime State
 
-	/** Populated from HoleData at BeginPlay. */
+	int32 ActiveCandidateIndex = INDEX_NONE;
+
+	/** Cached slot collection read from HoleData at BeginPlay. */
 	UPROPERTY()
 	FCourseHoleSlotCollection SlotCollection;
 
-	int32 ActiveCandidateIndex = INDEX_NONE;
-
 	void InitialiseFromDataAsset();
-	void BuildPatchISM();
-	int32 ResolveAutoIndex() const;
 
-	// #endregion
-
-	// #region Editor Only Data
-#if WITH_EDITORONLY_DATA
-
-	/** Dynamic mesh preview — editor visualization only, not present in cooked builds. */
-	UPROPERTY()
-	TObjectPtr<UDynamicMeshComponent> PreviewMeshComponent;
-
-	/** Asset name used when baking to static mesh. */
-	UPROPERTY(EditAnywhere, Category = "CourseHole|Bake")
-	FString BakedMeshName = TEXT("SM_Green_Baked");
-
-	/** Output path for baked static mesh and data assets. */
-	UPROPERTY(EditAnywhere, Category = "CourseHole|Bake", meta = (ContentDir))
-	FDirectoryPath BakeOutputPath;
-
-	/** If true, preview mesh updates automatically when PCG graph executes. */
-	UPROPERTY(EditAnywhere, Category = "CourseHole|Bake")
-	bool bAutoUpdatePreview = true;
-
-#endif // WITH_EDITORONLY_DATA
-	// #endregion
-
-	// #region Editor Methods
-#if WITH_EDITOR
-
-	void RebuildPreviewFromPCG();
-	bool ExtractSlotCollection(FCourseHoleSlotCollection& OutCollection) const;
-	void CommitBakeToDataAsset(UStaticMesh* BakedMesh,
-		const FCourseHoleSlotCollection& Collection);
-	void BindPCGDelegate();
-	void UnbindPCGDelegate();
-
-	/**
-	 * Finds an existing UStaticMesh asset at the given package path,
-	 * or creates a new empty one if none exists.
-	 * Required before calling CopyMeshToStaticMesh — the asset must exist first.
-	 */
-	UStaticMesh* CreateOrFindStaticMeshAsset(const FString& AssetPath);
-
-	UFUNCTION()
-	void OnPCGGenerationFinished(UPCGComponent* InPCGComponent);
-
-#endif // WITH_EDITOR
 	// #endregion
 };

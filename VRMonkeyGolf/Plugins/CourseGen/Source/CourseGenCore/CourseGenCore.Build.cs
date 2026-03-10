@@ -32,5 +32,17 @@ public class CourseGenCore : ModuleRules
                 "ModelingComponents",
             }
         );
+
+        if (Target.bBuildEditor == true)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "AdvancedPreviewScene",
+                    "UnrealEd",
+                    "PCGEditor"
+                }
+            );
+        }
     }
 }

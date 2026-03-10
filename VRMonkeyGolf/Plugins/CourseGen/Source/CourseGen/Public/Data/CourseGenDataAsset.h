@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Data/ProceduralEmbed.h"
 #include "Materials/MaterialInterface.h"
 #include "CourseGenDataAsset.generated.h"
 
@@ -29,4 +30,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="CourseGen")
     TSoftObjectPtr<UMaterialInterface> SlopedGreenMaterial;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseGen")
+    FProceduralEmbed DefaultCupEmbed;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseGen")
+    TSoftObjectPtr<UMaterialInterface> CupMaterial;
 };

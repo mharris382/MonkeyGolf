@@ -75,10 +75,11 @@ public:
 
 	/**
 	 * Data asset providing FlatGreenMaterial and SlopedGreenMaterial.
-	 * Must be assigned — node logs an error and passes mesh through unchanged if null.
+	 * Named CourseGenData to match ACourseHoleActor::CourseGenData —
+	 * PCG overrides match by UPROPERTY name, so GetActorProperty feeds this directly.
 	 */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Materials", meta = (PCG_Overridable))
-	TSoftObjectPtr<UCourseGenDataAsset> CourseDataAsset;
+	TSoftObjectPtr<UCourseGenDataAsset> CourseGenData;
 
 	/**
 	 * Faces within this angle of world up are classified as flat (slot 0).

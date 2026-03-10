@@ -8,6 +8,7 @@
 
 #include "CourseHoleActor.generated.h"
 
+
 class UPCGComponent;
 class UStaticMeshComponent;
 
@@ -77,6 +78,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CourseHole|Selection",
 		meta = (EditCondition = "SelectionMode==ECandidateSelectionMode::Seeded"))
 	int32 ExplicitSeed = 0;
+
+
+	/** Asset name used when baking to static mesh. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole|Bake")
+	FString BakedMeshName = TEXT("SM_Green_Baked");
+	
+	/** Output path for baked static mesh and data assets. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole|Bake", meta = (ContentDir))
+	FDirectoryPath BakeOutputPath;
+
+
+
+
+
+public:
+
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	// #endregion
 
@@ -159,6 +177,7 @@ public:
 
 private:
 
+	
 	// #region Runtime State
 
 	int32 ActiveCandidateIndex = INDEX_NONE;

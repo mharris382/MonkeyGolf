@@ -67,18 +67,18 @@ bool FPCGAssignCourseMaterialsElement::ExecuteInternal(FPCGContext* InContext) c
 
 	// ── 1. Validate data asset ────────────────────────────────────────────────
 
-	if (Settings->CourseDataAsset.IsNull())
+	if (Settings->CourseGenData.IsNull())
 	{
 		PCGE_LOG(Error, GraphAndLog, LOCTEXT("MissingDataAsset",
-			"AssignCourseMaterials: No CourseDataAsset assigned."));
+			"AssignCourseMaterials: No CourseGenData assigned."));
 		return true;
 	}
 
-	UCourseGenDataAsset* DataAsset = Settings->CourseDataAsset.LoadSynchronous();
+	UCourseGenDataAsset* DataAsset = Settings->CourseGenData.LoadSynchronous();
 	if (!DataAsset)
 	{
 		PCGE_LOG(Error, GraphAndLog, LOCTEXT("FailedLoad",
-			"AssignCourseMaterials: CourseDataAsset failed to load."));
+			"AssignCourseMaterials: CourseGenData failed to load."));
 		return true;
 	}
 

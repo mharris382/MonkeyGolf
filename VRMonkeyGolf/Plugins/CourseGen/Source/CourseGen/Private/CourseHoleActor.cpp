@@ -1,6 +1,7 @@
 #include "CourseHoleActor.h"
 
 #include "CourseGenTags.h"
+#include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
 #include "PCGComponent.h"
 
@@ -18,6 +19,13 @@ ACourseHoleActor::ACourseHoleActor()
 	SetRootComponent(GreenMeshComponent);
 
 	PCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("PCGComponent"));
+}
+
+
+void ACourseHoleActor::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	
 }
 
 // #endregion
@@ -46,6 +54,7 @@ void ACourseHoleActor::BeginPlay()
 // =============================================================================
 // #region Runtime Interface
 // =============================================================================
+
 
 TArray<FTransform> ACourseHoleActor::GetCupCandidates() const
 {

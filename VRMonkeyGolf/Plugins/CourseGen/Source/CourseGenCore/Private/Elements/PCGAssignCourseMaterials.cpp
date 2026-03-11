@@ -163,7 +163,7 @@ bool FPCGAssignCourseMaterialsElement::ExecuteInternal(FPCGContext* InContext) c
 
 		// ── 6. Classify each triangle by face normal ──────────────────────────
 
-		int32 FlatCount = 0;
+		int32 FlatCount   = 0;
 		int32 SlopedCount = 0;
 
 		for (int32 TriID : RawMesh->TriangleIndicesItr())
@@ -205,11 +205,23 @@ bool FPCGAssignCourseMaterialsElement::ExecuteInternal(FPCGContext* InContext) c
 				FText::AsNumber(SlopedCount),
 				FText::AsNumber(Settings->SlopeThresholdDegrees)));
 
-		// ── 7. Output ─────────────────────────────────────────────────────────
-		// Material slot references (flat=0, sloped=1) are resolved at bake time
-		// by ACourseHoleActor::BakeToStaticMesh via BakeOptions.bReplaceMaterials.
-		// We only write the material IDs here — not the material references themselves.
-		// The data asset is what connects IDs to actual UMaterialInterface* at bake.
+		// ── 7. Bind material references onto the mesh data ───────────────────
+		// UPCGDynamicMeshData::Materials is what SaveCourseMeshToAsset reads via
+		// GetMaterials() to populate AssetOptions.NewMaterials before calling
+		// CopyMeshToStaticMesh. Without this call that array is empty and no
+		// materials are written to the static mesh asset.
+		//
+		// Slot order must match the material IDs written above:
+		//   [0] = FlatGreenMaterial   (faces where dot >= DotThreshold)
+		//   [1] = SlopedGreenMaterial (all other faces)
+		{
+			UMaterialInterface* FlatMat   = DataAsset->FlatGreenMaterial.LoadSynchronous();
+			UMaterialInterface* SlopedMat = DataAsset->SlopedGreenMaterial.LoadSynchronous();
+
+			OutMeshData->SetMaterials({ FlatMat, SlopedMat });
+		}
+
+		// ── 8. Output ─────────────────────────────────────────────────────────
 
 		FPCGTaggedData& Output =
 			InContext->OutputData.TaggedData.Emplace_GetRef(InputTaggedData);

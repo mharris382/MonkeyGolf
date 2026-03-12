@@ -14,13 +14,10 @@ public class VRGolfOnline : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "VRGolf",
-                "GameplayTags",
-                "PhysicsCore",
                 "OnlineSubsystem",
                 "OnlineSubsystemEOS",
                 "OnlineSubsystemUtils",
-                "VRGolfSave",
+                "VRGolfSave"
             }
         );
 

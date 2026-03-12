@@ -12,6 +12,30 @@
 
 using namespace UE::Geometry;
 
+
+#define LOCTEXT_NAMESPACE "PCGSaveCourseMeshToAssetElement"
+
+#if WITH_EDITOR
+FName UPCGAssignCourseMaterialsSettings::GetDefaultNodeName() const
+{
+	return FName(TEXT("AssignCourseMaterials"));
+}
+
+FText UPCGAssignCourseMaterialsSettings::GetDefaultNodeTitle() const
+{
+	return NSLOCTEXT("CourseGenCore", "AssignCourseMaterials_Title", "Assign Course Materials");
+}
+
+FText UPCGAssignCourseMaterialsSettings::GetNodeTooltipText() const
+{
+	return NSLOCTEXT("CourseGenCore", "AssignCourseMaterials_Tooltip",
+		"Assigns flat/sloped material slots by face normal.\n"
+		"Faces within SlopeThresholdDegrees of world up → slot 0 (flat).\n"
+		"All other faces → slot 1 (sloped).\n"
+		"Run after boolean cuts, before bake.");
+}
+#endif // WITH_EDITOR
+
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 TArray<FPCGPinProperties> UPCGAssignCourseMaterialsSettings::InputPinProperties() const
@@ -184,7 +208,7 @@ bool FPCGAssignCourseMaterialsElement::ExecuteInternal(FPCGContext* InContext) c
 				continue;
 			}
 
-			const double Dot = Normal.Dot(WorldUp);
+			const double Dot = FMath::Abs(Normal.Dot(WorldUp));
 
 			if (Dot >= DotThreshold)
 			{

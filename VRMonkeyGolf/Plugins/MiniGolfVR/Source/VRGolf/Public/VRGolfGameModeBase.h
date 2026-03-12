@@ -6,28 +6,25 @@
 #include "VRGolfGameModeBase.generated.h"
 
 /**
- * VR Golf Game Mode Base - Core mechanics WITHOUT scoring
- * 
- * Use this directly for:
- * - Practice mode (no scores, no turns)
- * - Training levels
- * - Trick shot challenges
- * - Free play
- * 
- * Provides:
- * - Hole loading and management
- * - Ball spawning and tracking
- * - Ghost ball permissions
- * - Teleport system
- * - Reset handling
- * 
- * Does NOT provide:
- * - Scoring
- * - Turn management
- * - Win conditions
- * - PlayerState integration
- * 
- * Extend with AVRGolfGameMode for competitive play with scoring
+ * VR Golf Game Mode Base
+ *
+ * All game modes inherit from this — menu, practice, competitive, future modes.
+ * Owns everything that is true for ALL modes:
+ *   - Hole loading and management
+ *   - Ball spawning and tracking
+ *   - Ghost ball system
+ *   - Teleport system
+ *   - Network session handling (PostLogin, disconnect, host migration)
+ *   - Player tracking (ActivePlayerStates, ControllerToState)
+ *   - Profile identity wiring
+ *
+ * Does NOT own:
+ *   - Scoring
+ *   - Turn management
+ *   - Win conditions
+ *
+ * Extend with AVRGolfGameMode for competitive play with scoring.
+ * Use directly for menu, practice, or free play modes.
  */
 UCLASS()
 class VRGOLF_API AVRGolfGameModeBase : public AGameMode
@@ -40,65 +37,72 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
-    // === HOLE MANAGEMENT ===
+    // === NETWORK / SESSION ===
 
     /**
-     * Load and activate a specific hole
+     * Called by UE when a new player controller connects (host only).
+     * Registers player in tracking maps and wires profile identity.
      */
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+
+    /**
+     * Called by UE when a player disconnects (host only).
+     * Cleans up tracking and notifies online subsystem.
+     */
+    virtual void NotifyPlayerDisconnected(APlayerController* ExitingPlayer);
+
+    /**
+     * Called when EOS promotes this machine to host after original host drops.
+     * Notifies online subsystem so UI can respond.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Golf|Network")
+    virtual void HandleHostMigration();
+
+    /**
+     * Remove a player from active tracking and clean up their ball.
+     * Safe to call from any derived game mode.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Golf|Network")
+    virtual void RemovePlayerFromSession(class AVRGolfPlayerState* LeavingPlayerState);
+
+    /**
+     * Lock or unlock late joining. Call SetAllowLateJoin(false) when round starts.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Golf|Network")
+    void SetAllowLateJoin(bool bAllow);
+
+    // === HOLE MANAGEMENT ===
+
     UFUNCTION(BlueprintCallable, Category = "Golf")
     virtual void LoadHole(int32 HoleNumber);
 
-    /**
-     * Get the currently active hole
-     */
     UFUNCTION(BlueprintPure, Category = "Golf")
     class AVRGolfHole* GetCurrentHole() const { return CurrentHole; }
 
     // === BALL MANAGEMENT ===
 
-    /**
-     * Spawn a ball for a player at the tee
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     virtual class AVRGolfBall* SpawnBallForPlayer(APlayerController* PlayerController);
 
-    /**
-     * Get ball for a specific player
-     */
     UFUNCTION(BlueprintPure, Category = "Golf")
     class AVRGolfBall* GetPlayerBall(APlayerController* PlayerController) const;
 
-    /**
-     * Called when a ball completes the hole
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     virtual void OnBallCompletedHole(class AVRGolfBall* Ball);
 
     // === GHOST BALL SYSTEM ===
 
-    /**
-     * Can this player spawn a ghost ball?
-     */
     UFUNCTION(BlueprintPure, Category = "Golf|Ghost")
     virtual bool CanPlayerUseGhostBall(APlayerController* PlayerController) const;
 
-    /**
-     * Spawn a ghost ball for practice
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf|Ghost")
     virtual class AVRGolfGhostBall* SpawnGhostBall(class AVRGolfBall* SourceBall);
 
-    /**
-     * Track ghost ball usage (for limits)
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf|Ghost")
     virtual void OnPlayerUseGhostBall(APlayerController* PlayerController);
 
     // === TELEPORT SYSTEM ===
 
-    /**
-     * Teleport player to their ball with aim alignment
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf|Teleport")
     virtual void TeleportPlayerToBall(APlayerController* PlayerController);
 
@@ -111,38 +115,39 @@ public:
     TSubclassOf<class AVRGolfGhostBall> GhostBallClass;
 
 protected:
-    // Current active hole
+    // === PLAYER TRACKING ===
+    // Lives in base so all game modes (menu, practice, competitive) share it.
+
+    UPROPERTY()
+    TArray<class AVRGolfPlayerState*> ActivePlayerStates;
+
+    UPROPERTY()
+    TMap<APlayerController*, class AVRGolfPlayerState*> ControllerToState;
+
+    // === HOLE / BALL STATE ===
+
     UPROPERTY()
     class AVRGolfHole* CurrentHole;
 
-    // Track balls per player
     UPROPERTY()
     TMap<APlayerController*, class AVRGolfBall*> PlayerBalls;
 
-    // Track ghost ball usage per player per hole
     TMap<APlayerController*, int32> GhostBallUsageThisHole;
 
-    // === HOLE LOADING ===
+    // === SESSION STATE ===
 
-    /**
-     * Find hole actor in the level by hole number
-     */
+    /** True once a round has started — gates late-join ball spawning. */
+    bool bRoundStarted = false;
+
+    // === HELPERS ===
+
     class AVRGolfHole* FindHoleInLevel(int32 HoleNumber) const;
 
-    // === TELEPORT HELPERS ===
+    /** Helper used by derived classes to look up PlayerState from controller. */
+    class AVRGolfPlayerState* GetPlayerStateForController(APlayerController* Controller) const;
 
-    /**
-     * Calculate where to teleport player based on ball position and target
-     */
     FTransform CalculateTeleportTransform(class AVRGolfBall* Ball, const FVector& TargetLocation) const;
-
-    /**
-     * Get the target location the ball should aim for
-     * (accounts for multi-stage holes)
-     */
     FVector GetTargetLocationForBall(class AVRGolfBall* Ball) const;
-
-    // === SETTINGS ACCESS ===
 
     const class UVRGolfSettings* GetGolfSettings() const;
 };

@@ -13,10 +13,7 @@ public class VRGolfSave : ModuleRules
             {
                 "Core",
                 "CoreUObject",
-                "Engine",
-                "VRGolf",
-                "GameplayTags",
-                "PhysicsCore",
+                "Engine"
             }
         );
 

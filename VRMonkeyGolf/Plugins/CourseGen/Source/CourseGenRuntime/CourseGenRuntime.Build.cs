@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VRGolfTesting : ModuleRules
+public class CourseGenRuntime : ModuleRules
 {
-    public VRGolfTesting(ReadOnlyTargetRules Target) : base(Target)
+    public CourseGenRuntime(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -14,12 +14,8 @@ public class VRGolfTesting : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "VRGolf",
-                "GameplayTags",
-                "PhysicsCore",
-                "UnrealEd",
+                "CourseGen",
                 "PCG",
-                "VRGolfEnviornment"
             }
         );
 

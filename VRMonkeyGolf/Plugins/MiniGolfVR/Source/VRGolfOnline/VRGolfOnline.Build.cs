@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VRGolfTesting : ModuleRules
+public class VRGolfOnline : ModuleRules
 {
-    public VRGolfTesting(ReadOnlyTargetRules Target) : base(Target)
+    public VRGolfOnline(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -17,9 +17,10 @@ public class VRGolfTesting : ModuleRules
                 "VRGolf",
                 "GameplayTags",
                 "PhysicsCore",
-                "UnrealEd",
-                "PCG",
-                "VRGolfEnviornment"
+                "OnlineSubsystem",
+                "OnlineSubsystemEOS",
+                "OnlineSubsystemUtils",
+                "VRGolfSave",
             }
         );
 

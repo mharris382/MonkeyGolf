@@ -25,8 +25,15 @@ public class CourseGen : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
-				// ... add other public dependencies that you statically link with here ...
+                "Core",
+                "CoreUObject",
+                "Engine",
+                "PCG",
+                "GeometryScriptingCore",
+                "PCGGeometryScriptInterop",
+                "ModelingOperators",
+                "RHI",
+                "RenderCore"
 			}
 			);
 			
@@ -34,20 +41,21 @@ public class CourseGen : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
+				"GeometryCore",
+                "GeometryFramework",
+                "ModelingComponents",
 			}
 			);
 		
 		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
+		if (Target.bBuildEditor == true)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "UnrealEd"
+                }
+            );
+        }
 	}
 }

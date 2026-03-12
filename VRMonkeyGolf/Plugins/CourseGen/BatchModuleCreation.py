@@ -7,25 +7,17 @@ from typing import Dict, List, Tuple
 # Inputs (from your file)
 # -------------------------
 
-COPY_FROM_PATH = r"PCGRuntimeUtilities\Source\ISMRuntimeCore"  # unused for now
 
-TARGET_ABSOLUTE_PATH_UPLUGIN_FILE = r"B:\UnrealEngine5_Projects\_repos6\ShoplifterSimVR\ShoplifterSimulator\Plugins\MiniGolfVR\MiniGolfVR.uplugin"
-TARGET_ABSOLUTE_PATH_SOURCE = r"B:\UnrealEngine5_Projects\_repos6\ShoplifterSimVR\ShoplifterSimulator\Plugins\MiniGolfVR\Source"
+TARGET_ABSOLUTE_PATH_UPLUGIN_FILE =     r"B:\UnrealEngine5_Projects\_repos6\MonkeyGolf\VRMonkeyGolf\Plugins\CourseGen\CourseGen.uplugin"
+TARGET_ABSOLUTE_PATH_SOURCE =           r"B:\UnrealEngine5_Projects\_repos6\MonkeyGolf\VRMonkeyGolf\Plugins\CourseGen\Source"
 
-DEFAULT_PUBLIC_DEPENDENCIES = ["Core", "CoreUObject", "Engine", "VRGolf", "GameplayTags", "PhysicsCore"]
+DEFAULT_PUBLIC_DEPENDENCIES = ["Core", "CoreUObject", "Engine", "CourseGen", "PCG"]
 DEFAULT_PRIVATE_DEPENDENCIES: List[str] = []
 
 # format: ModuleName : [IsRuntimeModule, Description, PublicDependencies, PrivateDependencies]
 OUTPUT_MODULE_DEFINITIONS: Dict[str, List] = {
-    "VRGolfEnviornment":        [True,  "Base C++ classes and Custom PCG Elements for implementing PCG course generation", ["GeometryScripting", "PCG", "PCGHelpers"], []],
-    "VRGolfPlayer":        [True,  "C++ classes for VR golfing pawn", ["EnhancedInput", "XRBase", "VRExpansionPlugin"], []],
-    "VRGolfFeedbacks":        [True,  "Golfing feedbacks system", ["ISMRuntimeFeedbacks", "Niagara"], []],
-    "VRGolfEditor":        [False,  "", ["UnrealEd", "PCG", "VRGolfEnviornment", "VRGolf"], []],
-    "VRGolfTesting":        [False,  "", ["UnrealEd", "PCG", "VRGolfEnviornment", "VRGolf", "GameplayTags", "PhysicsCore"], []],
-    "VRGolfSave":        [True,  "", [], []],
-    "VRGolfOnline":        [True,  "", ["OnlineSubsystem", "OnlineSubsystemEOS", "OnlineSubsystemUtils", "VRGolfSave"], []],
-    "VRGolfUI":        [True,  "", ["Slate"], []],
-    "PCGHelpers" :       [False,  "", ["PCG"], []]
+    "CourseGenCore" :       [False,  "", ["GeometryScriptingCore", "PCGGeometryScriptInterop", "ModelingOperators", "RHI","RenderCore"], ["GeometryCore","GeometryFramework","ModelingComponents"]],
+    "CourseGenRuntime" :       [True,  "", [], []]
     #"VRGolf":        [True,  "", ["", "", ""], []]
 }
 

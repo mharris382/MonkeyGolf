@@ -3,6 +3,8 @@
 #include "CourseGenTags.h"
 #include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CourseSplineComponent.h"
 #include "PCGComponent.h"
 
 #define LOCTEXT_NAMESPACE "CourseGen"
@@ -19,15 +21,22 @@ ACourseHoleActor::ACourseHoleActor()
 	SetRootComponent(GreenMeshComponent);
 
 	PCGComponent = CreateDefaultSubobject<UPCGComponent>(TEXT("PCGComponent"));
+
+	HoleBoundsComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("HoleBounds"));
+	HoleBoundsComponent->SetupAttachment(GreenMeshComponent);
+	HoleBoundsComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HoleBoundsComponent->SetLineThickness(2.0f);
+
+	// Visible in editor for authoring feedback, hidden at runtime
+	HoleBoundsComponent->SetHiddenInGame(true);
 }
 
 
 void ACourseHoleActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	
+	RecomputeHoleBounds();
 }
-
 // #endregion
 
 // =============================================================================
@@ -50,7 +59,65 @@ void ACourseHoleActor::BeginPlay()
 }
 
 // #endregion
+// =============================================================================
+// #region Bounds
+// =============================================================================
 
+void ACourseHoleActor::RecomputeHoleBounds()
+{
+	// Union world-space bounds of every child USplineComponent.
+	// Works for both default-subobject splines and BP-added splines.
+
+	FBox UnionBox(EForceInit::ForceInit);
+
+	// Query specifically for CourseSplineComponents — ignores any unrelated
+	// USplineComponents that might exist on child actors or other systems.
+	TArray<UCourseSplineComponent*> Splines;
+	GetComponents<UCourseSplineComponent>(Splines);
+
+	for (const USplineComponent* Spline : Splines)
+	{
+		if (!Spline) { continue; }
+
+		// Sample spline points to build a tight world-space box.
+		// SplinePoints are in local space — transform each to world.
+		const int32 NumPoints = Spline->GetNumberOfSplinePoints();
+		for (int32 i = 0; i < NumPoints; ++i)
+		{
+			const FVector WorldPos =
+				Spline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
+			UnionBox += WorldPos;
+		}
+	}
+
+	if (!UnionBox.IsValid)
+	{
+		// No splines yet — set a small default so the box component isn't degenerate
+		UnionBox = FBox(GetActorLocation() - FVector(100.f),
+			GetActorLocation() + FVector(100.f));
+	}
+
+	// Convert world-space AABB to component-local extent + offset.
+	// BoxComponent extent is half-size in local space.
+	const FVector WorldCenter = UnionBox.GetCenter();
+	const FVector HalfExtent = UnionBox.GetExtent() + FVector(BoundsPadding);
+
+	// Position the box component at the AABB center in world space,
+	// then set its local extent to match (spline bounds + padding).
+	HoleBoundsComponent->SetWorldLocation(WorldCenter);
+	HoleBoundsComponent->SetBoxExtent(HalfExtent, /*bUpdateOverlaps*/false);
+}
+
+FBox ACourseHoleActor::GetHoleBounds_Implementation() const
+{
+	// HoleBoundsComponent already includes BoundsPadding from RecomputeHoleBounds.
+	// Subclasses can override to return a further expanded or custom box.
+	const FVector Center = HoleBoundsComponent->GetComponentLocation();
+	const FVector Extent = HoleBoundsComponent->GetScaledBoxExtent();
+	return FBox(Center - Extent, Center + Extent);
+}
+
+// #endregion
 // =============================================================================
 // #region Runtime Interface
 // =============================================================================

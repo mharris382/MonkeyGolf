@@ -10,6 +10,8 @@
 
 
 class UPCGComponent;
+class USplineComponent;
+class UBoxComponent;
 class UStaticMeshComponent;
 
 UENUM(BlueprintType)
@@ -118,6 +120,38 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CourseHole")
 	bool IsActivated() const { return ActiveCandidateIndex != INDEX_NONE; }
 
+#pragma region BOUNDS
+	
+
+/**
+ * World-space AABB enclosing all child spline components.
+ * Recomputed every OnConstruction — stays live as splines are edited.
+ * PCG graphs read this to spatially restrict world actor queries.
+ */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CourseHole|Bounds")
+	TObjectPtr<UBoxComponent> HoleBoundsComponent;
+
+	/**
+	 * Uniform padding applied to the spline-derived AABB on all sides.
+	 * Default 500cm — enough to capture nearby WorldBrushActors and boundary zone.
+	 * Increase if PCG queries are missing actors just outside the green edge.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CourseHole|Bounds",
+		meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "2000.0", ForceUnits = "cm"))
+	float BoundsPadding = 500.f;
+
+	/**
+	 * Returns the world-space AABB of this hole, derived from all child splines
+	 * expanded by BoundsPadding on all sides.
+	 * BP interface hook — override in subclass to provide a custom bounds box.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "CourseHole|Bounds")
+	FBox GetHoleBounds() const;
+	virtual FBox GetHoleBounds_Implementation() const;
+
+#pragma endregion
+
+
 	/**
 	 * Records the chosen candidate index.
 	 * Does not spawn anything — notifies via OnCandidateActivated for
@@ -187,6 +221,7 @@ private:
 	FCourseHoleSlotCollection SlotCollection;
 
 	void InitialiseFromDataAsset();
-
+	/** Unions world-space bounds of all child USplineComponents and updates HoleBoundsComponent. */
+	void RecomputeHoleBounds();
 	// #endregion
 };

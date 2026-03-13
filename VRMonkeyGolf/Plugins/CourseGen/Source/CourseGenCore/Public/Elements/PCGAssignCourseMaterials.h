@@ -40,35 +40,17 @@ class COURSEGENCORE_API UPCGAssignCourseMaterialsSettings : public UPCGDynamicMe
 public:
 
 #if WITH_EDITOR
-	virtual FName GetDefaultNodeName() const override
-	{
-		return FName(TEXT("AssignCourseMaterials"));
-	}
-
-	virtual FText GetDefaultNodeTitle() const override
-	{
-		return NSLOCTEXT("CourseGenCore", "AssignCourseMaterials_Title", "Assign Course Materials");
-	}
-
-	virtual FText GetNodeTooltipText() const override
-	{
-		return NSLOCTEXT("CourseGenCore", "AssignCourseMaterials_Tooltip",
-			"Assigns flat/sloped material slots by face normal.\n"
-			"Faces within SlopeThresholdDegrees of world up → slot 0 (flat).\n"
-			"All other faces → slot 1 (sloped).\n"
-			"Run after boolean cuts, before bake.");
-	}
+	virtual FName GetDefaultNodeName() const override;
+	virtual FText GetDefaultNodeTitle() const override;
+	virtual FText GetNodeTooltipText() const override;
 #endif
 
-	virtual EPCGDataType GetCurrentPinTypes(const UPCGPin* InPin) const override
-	{
-		return EPCGDataType::DynamicMesh;
-	}
 
+
+protected:
 	virtual TArray<FPCGPinProperties> InputPinProperties() const override;
 	virtual TArray<FPCGPinProperties> OutputPinProperties() const override;
 
-protected:
 	virtual FPCGElementPtr CreateElement() const override;
 
 public:

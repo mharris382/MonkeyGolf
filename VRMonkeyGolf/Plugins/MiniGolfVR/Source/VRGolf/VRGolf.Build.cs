@@ -36,8 +36,9 @@ public class VRGolf : ModuleRules
 				"UMG",
 				"SlateCore",
 				"DeveloperSettings",
-				"PhysicsCore"
-                
+				"PhysicsCore",
+				"VRGolfSave",
+				"VRGolfOnline"
 			}
 			);
 			
@@ -45,7 +46,9 @@ public class VRGolf : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-                
+                "OnlineSubsystem",
+                "OnlineSubsystemEOS",
+                "OnlineSubsystemUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

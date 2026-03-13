@@ -18,13 +18,17 @@ public class VRGolfUI : ModuleRules
                 "GameplayTags",
                 "PhysicsCore",
                 "Slate",
+                "SlateCore",   // ← add
+                "UMG",         // ← add (UWidgetComponent, UUserWidget)
+                "InputCore",   // ← add (EKeys, for interactor later)
             }
         );
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-
+                "VRGolfOnline",
+                "VRGolfSave"
             }
         );
     }

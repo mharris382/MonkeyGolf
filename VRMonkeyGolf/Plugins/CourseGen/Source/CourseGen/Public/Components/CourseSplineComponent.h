@@ -67,6 +67,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CourseSpline")
 	ECourseSplineRole Role = ECourseSplineRole::Green;
 
+
+
+
 	/**
 	 * Depth of downward extrusion when building green mesh side walls.
 	 * Gives the green a physical thickness so it reads as a solid surface

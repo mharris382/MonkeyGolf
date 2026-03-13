@@ -16,13 +16,19 @@ void AVRGolfPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     DOREPLIFETIME(AVRGolfPlayerState, HoleScores);
     DOREPLIFETIME(AVRGolfPlayerState, CurrentHoleStrokes);
     DOREPLIFETIME(AVRGolfPlayerState, bIsMyTurn);
+    DOREPLIFETIME(AVRGolfPlayerState, ProfileName);
+    DOREPLIFETIME(AVRGolfPlayerState, ProfileID);
 }
+
+// ---------------------------------------------------------------------------
+// Score
+// ---------------------------------------------------------------------------
 
 void AVRGolfPlayerState::AddStroke(int32 HoleNumber)
 {
     CurrentHoleStrokes++;
-    
-    UE_LOG(LogTemp, Log, TEXT("Player %s: Stroke #%d on hole %d"), 
+
+    UE_LOG(LogTemp, Log, TEXT("Player %s: Stroke #%d on hole %d"),
            *GetPlayerName(), CurrentHoleStrokes, HoleNumber);
 }
 
@@ -30,41 +36,42 @@ void AVRGolfPlayerState::CompleteHole(int32 HoleNumber, int32 FinalStrokes, int3
 {
     FHoleScore NewScore;
     NewScore.HoleNumber = HoleNumber;
-    NewScore.Strokes = FinalStrokes;
-    NewScore.Par = Par;
+    NewScore.Strokes    = FinalStrokes;
+    NewScore.Par        = Par;
     NewScore.bCompleted = true;
 
     HoleScores.Add(NewScore);
-    
-    // Reset for next hole
     CurrentHoleStrokes = 0;
 
-    UE_LOG(LogTemp, Log, TEXT("Player %s completed hole %d: %d strokes (Par %d, %+d)"), 
+    UE_LOG(LogTemp, Log, TEXT("Player %s completed hole %d: %d strokes (Par %d, %+d)"),
            *GetPlayerName(), HoleNumber, FinalStrokes, Par, NewScore.GetScoreToPar());
 
-    // Notify clients
     OnRep_HoleScores();
 }
 
 int32 AVRGolfPlayerState::GetTotalStrokes() const
 {
     int32 Total = 0;
-    for (const FHoleScore& sc : HoleScores)
+    for (const FHoleScore& S : HoleScores)
     {
-        Total += sc.Strokes;
+        Total += S.Strokes;
     }
     return Total;
 }
 
 int32 AVRGolfPlayerState::GetTotalScore() const
 {
-    int32 SCR = 0;
-    for (const FHoleScore& HoleScore : HoleScores)
+    int32 Total = 0;
+    for (const FHoleScore& S : HoleScores)
     {
-        SCR += HoleScore.GetScoreToPar();
+        Total += S.GetScoreToPar();
     }
-    return SCR;
+    return Total;
 }
+
+// ---------------------------------------------------------------------------
+// Turn
+// ---------------------------------------------------------------------------
 
 void AVRGolfPlayerState::SetIsMyTurn(bool bInTurn)
 {
@@ -74,16 +81,35 @@ void AVRGolfPlayerState::SetIsMyTurn(bool bInTurn)
 
 void AVRGolfPlayerState::OnRep_HoleScores()
 {
-    // Notify UI to update scoreboard
-    // This is where you'd broadcast a delegate or event for UI updates
+    // Broadcast delegate here when UI scoreboard is wired up
 }
 
 void AVRGolfPlayerState::OnRep_IsMyTurn()
 {
-    // Notify UI to show/hide turn indicator
     if (bIsMyTurn)
     {
         UE_LOG(LogTemp, Log, TEXT("It's my turn! (Player: %s)"), *GetPlayerName());
-        // This is where you'd show UI feedback like "YOUR TURN" overlay
     }
+    // Broadcast delegate here for turn indicator UI
+}
+
+// ---------------------------------------------------------------------------
+// Profile identity
+// ---------------------------------------------------------------------------
+
+void AVRGolfPlayerState::SetProfileIdentity(const FString& InProfileName, const FGuid& InProfileID)
+{
+    ProfileName = InProfileName;
+    ProfileID   = InProfileID;
+
+    // Keep UE's built-in PlayerName in sync so VRE and engine systems
+    // display the correct name without additional wiring
+    SetPlayerName(InProfileName);
+}
+
+void AVRGolfPlayerState::OnRep_ProfileName()
+{
+    // Keep engine PlayerName in sync on clients
+    SetPlayerName(ProfileName);
+    // Broadcast delegate here for scoreboard name update
 }

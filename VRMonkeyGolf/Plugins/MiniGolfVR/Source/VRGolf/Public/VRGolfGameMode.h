@@ -3,17 +3,15 @@
 
 #include "CoreMinimal.h"
 #include "VRGolfGameModeBase.h"
-#include "Delegates/DelegateCombinations.h"
 #include "VRGolfGameMode.generated.h"
-
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVRGolf, Log, All);
 
 UENUM(BlueprintType)
 enum class EGolfTurnOrder : uint8
 {
-    Sequential,     // Player 1, 2, 3... in order
-    FurthestFirst   // Furthest from hole goes first (like real golf)
+    Sequential,     // Player 1, 2, 3... in fixed order
+    FurthestFirst   // Furthest from hole goes first (real golf rules)
 };
 
 UENUM(BlueprintType)
@@ -26,16 +24,16 @@ enum class EGamePhase : uint8
 };
 
 /**
- * VR Golf Game Mode - Competitive play with scoring and turns
- * 
+ * VR Golf Game Mode — Competitive play with scoring and turns.
+ *
  * Extends AVRGolfGameModeBase with:
- * - Player scoring via PlayerState
- * - Turn management (sequential or furthest-first)
- * - Round progression (multiple holes)
- * - Win conditions
- * - Multiplayer support
- * 
- * Use AVRGolfGameModeBase for practice/training modes without scoring
+ *   - Player scoring via AVRGolfPlayerState
+ *   - Turn management (sequential or furthest-first)
+ *   - Round progression (multiple holes)
+ *   - Win conditions
+ *
+ * Network session handling, player tracking, and profile identity
+ * are all inherited from AVRGolfGameModeBase — do not duplicate here.
  */
 UCLASS()
 class VRGOLF_API AVRGolfGameMode : public AVRGolfGameModeBase
@@ -50,59 +48,40 @@ public:
 
     // === GAME FLOW ===
 
-    /**
-     * Start a full round of golf
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     void StartRound();
 
-    /**
-     * Override base LoadHole to add scoring setup
-     */
     virtual void LoadHole(int32 HoleNumber) override;
 
-    /**
-     * Called when a player takes a stroke
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     void OnPlayerStroke(class AVRGolfPlayerState* PlayerState, class AVRGolfBall* Ball);
 
-    /**
-     * Override base OnBallCompletedHole to add scoring
-     */
     virtual void OnBallCompletedHole(class AVRGolfBall* Ball) override;
 
-    /**
-     * Manually advance to next hole
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     void SkipToNextHole();
 
     // === TURN MANAGEMENT ===
 
-    /**
-     * Advance to next player's turn
-     */
     UFUNCTION(BlueprintCallable, Category = "Golf")
     void AdvanceTurn();
 
-    /**
-     * Get current turn player
-     */
     UFUNCTION(BlueprintPure, Category = "Golf")
     class AVRGolfPlayerState* GetCurrentTurnPlayer() const;
 
-    /**
-     * Check if it's a specific player's turn
-     */
     UFUNCTION(BlueprintPure, Category = "Golf")
     bool IsPlayersTurn(class AVRGolfPlayerState* PlayerState) const;
 
-    /**
-     * Get current game phase
-     */
     UFUNCTION(BlueprintPure, Category = "Golf")
     EGamePhase GetGamePhase() const { return CurrentPhase; }
+
+    // === DISCONNECT OVERRIDE ===
+
+    /**
+     * Override base disconnect to also handle turn advancement
+     * and hole completion when a player drops mid-round.
+     */
+    virtual void RemovePlayerFromSession(class AVRGolfPlayerState* LeavingPlayerState) override;
 
     // === CONFIGURATION ===
 
@@ -115,34 +94,21 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Golf|Rules")
     bool bAutoAdvanceTurn = true;
 
-    /**
-     * Override ghost ball check for multiplayer
-     */
     virtual bool CanPlayerUseGhostBall(APlayerController* PlayerController) const override;
 
 protected:
-    // Player tracking
-    UPROPERTY()
-    TArray<class AVRGolfPlayerState*> ActivePlayerStates;
-
-    // Map players to their states (needed because base class uses PlayerController keys)
-    UPROPERTY()
-    TMap<APlayerController*, class AVRGolfPlayerState*> ControllerToState;
-
     // Turn state
-    int32 CurrentTurnIndex;
+    int32 CurrentTurnIndex = 0;
 
     UPROPERTY()
     class AVRGolfPlayerState* CurrentTurnPlayerState;
 
-    // Hole state
-    int32 CurrentHoleNumber;
-
-    UPROPERTY()
-    EGamePhase CurrentPhase;
+    EGamePhase CurrentPhase = EGamePhase::WaitingToStart;
 
     UPROPERTY()
     TSet<class AVRGolfPlayerState*> PlayersCompletedHole;
+
+    int32 CurrentHoleNumber = 1;
 
     // Initialization
     void InitializePlayers();
@@ -161,7 +127,4 @@ protected:
 
     // Round management
     void OnRoundComplete();
-
-    // Helper to get player state from controller
-    class AVRGolfPlayerState* GetPlayerStateForController(APlayerController* Controller) const;
 };

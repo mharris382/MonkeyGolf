@@ -13,7 +13,6 @@
 using namespace UE::Geometry;
 
 
-#define LOCTEXT_NAMESPACE "PCGSaveCourseMeshToAssetElement"
 
 #if WITH_EDITOR
 FName UPCGAssignCourseMaterialsSettings::GetDefaultNodeName() const

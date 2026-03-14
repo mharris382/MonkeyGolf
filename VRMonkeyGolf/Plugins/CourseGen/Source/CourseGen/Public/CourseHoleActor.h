@@ -5,6 +5,7 @@
 #include "ProceduralSlot.h"
 #include "Data/CourseHoleDataAsset.h"
 #include "Data/CourseGenDataAsset.h"
+#include "PCGGraph.h"
 
 #include "CourseHoleActor.generated.h"
 
@@ -22,6 +23,11 @@ enum class ECandidateSelectionMode : uint8
 	Seeded,   // Uses ExplicitSeed value
 	External  // Caller must invoke ActivateCupCandidate manually
 };
+
+
+
+
+
 
 /**
  * ACourseHoleActor
@@ -59,12 +65,14 @@ public:
 	 * Contains baked green mesh ref, tee transform, and cup candidate slots.
 	 * Read at BeginPlay to populate runtime state.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole", AdvancedDisplay)
 	TObjectPtr<UCourseHoleDataAsset> HoleData;
 
 	/** Index of this hole within the course. Used by PCG and runtime systems. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CourseHole")
 	int32 HoleIndex = 0;
+
+
 
 	// #endregion
 

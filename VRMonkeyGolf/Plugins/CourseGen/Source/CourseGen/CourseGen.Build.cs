@@ -33,7 +33,8 @@ public class CourseGen : ModuleRules
                 "PCGGeometryScriptInterop",
                 "ModelingOperators",
                 "RHI",
-                "RenderCore"
+                "RenderCore",
+				"PCGUtils"
 			}
 			);
 			

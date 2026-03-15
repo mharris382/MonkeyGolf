@@ -110,6 +110,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Golf|FloorProxy")
     FVector GetFloorSurfaceLocation() const;
 
+    UPROPERTY(EditAnywhere)
+    TObjectPtr<UAudioComponent> BallAudioComponent;
+
+    // On begin play — attach a MetaSound Source asset
+    BallAudioComponent->SetSound(BallImpactMetaSound);
+
+    // On stroke (wire this into your OnBallStruck delegate)
+    void AVRGolfBall::PlayImpactSound(float NormalizedSpeed, int32 SurfaceIndex)
+    {
+        BallAudioComponent->SetFloatParameter(FName("HitSpeed"), NormalizedSpeed);
+        BallAudioComponent->SetIntParameter(FName("SurfaceMaterial"), SurfaceIndex);
+        BallAudioComponent->Play(); // re-triggers On Play in the graph
+    }
+
+    // For roll loop — call this from Tick while ball is moving
+    void AVRGolfBall::UpdateRollSound(float Speed)
+    {
+        // Normalize against your max expected speed
+        float Normalized = FMath::Clamp(Speed / MaxRollSpeed, 0.f, 1.f);
+        RollAudioComponent->SetFloatParameter(FName("RollSpeed"), Normalized);
+    }
+
+    // On ball stopped (bind to your FOnBallStopped delegate)
+    void AVRGolfBall::OnBallStoppedHandler()
+    {
+        RollAudioComponent->SetTriggerParameter(FName("Stop"));
+    }
+
 private:
     UPROPERTY()
     AVRFloorProxy* FloorProxy = nullptr;

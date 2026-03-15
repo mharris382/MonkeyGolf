@@ -31,18 +31,22 @@
             "LoadingPhase": "Default"
         }
     ],
-     "Plugins": [
-        {
-			"Name": "PCG",
-			"Enabled": true
-		},
-		{
-			"Name": "GeometryScripting",
-			"Enabled": true
-		},
-		{
-			"Name": "PCGGeometryScriptInterop",
-			"Enabled": true
-		}
+  "Plugins": [
+    {
+      "Name": "PCG",
+      "Enabled": true
+    },
+    {
+      "Name": "GeometryScripting",
+      "Enabled": true
+    },
+    {
+      "Name": "PCGGeometryScriptInterop",
+      "Enabled": true
+    },
+    {
+      "Name": "PCGUtils",
+      "Enabled": true
+    }
   ]
 }

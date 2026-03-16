@@ -2,12 +2,17 @@
 
 #define LOCTEXT_NAMESPACE "FCourseGenCoreModule"
 
+
+
+
 void FCourseGenCore::StartupModule()
 {
+
 }
 
 void FCourseGenCore::ShutdownModule()
 {
+
 }
 
 #undef LOCTEXT_NAMESPACE

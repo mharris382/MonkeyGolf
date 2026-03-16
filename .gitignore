@@ -88,3 +88,5 @@ VRMonkeyGolf/Plugins/*/Binaries/*
 VRMonkeyGolf/Build/
 
 VRMonkeyGolf/Plugins/CourseGen/Intermediate/
+
+VRMonkeyGolf/.idea/

@@ -46,6 +46,10 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "GolfBall|FloorProxy")
     FOnProxyLanded OnProxyLanded;
+    
+    
+    
+    
 
     UPROPERTY(BlueprintAssignable, Category = "GolfBall|FloorProxy")
     FOnProxyAirborne OnProxyAirborne;

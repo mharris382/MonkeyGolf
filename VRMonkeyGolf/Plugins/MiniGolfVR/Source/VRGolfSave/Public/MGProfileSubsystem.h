@@ -7,7 +7,7 @@
 #include "MGProfileSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProfileLoaded, UMGProfileSaveGame*, Profile);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProfileSaved,  UMGProfileSaveGame*, Profile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProfileSaved,  UMGProfileSaveGame*, Profile); 
 
 /**
  * GameInstance subsystem — lives for the lifetime of the game session.

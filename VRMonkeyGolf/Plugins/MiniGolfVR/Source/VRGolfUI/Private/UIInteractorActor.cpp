@@ -9,14 +9,15 @@ AUIInteractorActor::AUIInteractorActor()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
 
-    // WidgetInteractionComponent is created here but not attached yet —
-    // attachment happens in BeginPlay once AimComponent is assigned.
-    WidgetInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(
-        TEXT("WidgetInteraction"));
+    // Root must be created and set first
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(Root);
+
+    // Now create and attach WidgetInteraction to root
+    WidgetInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("WidgetInteraction"));
+    WidgetInteraction->SetupAttachment(Root);
     WidgetInteraction->InteractionDistance = TraceDistance;
     WidgetInteraction->InteractionSource = EWidgetInteractionSource::Custom;
-    // Custom source means we drive the trace manually via
-    // SetCustomHitResult each tick, using AimComponent's transform.
 }
 
 void AUIInteractorActor::BeginPlay()

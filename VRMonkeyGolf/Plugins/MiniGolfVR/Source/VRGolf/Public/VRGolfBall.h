@@ -1,10 +1,13 @@
 // VRGolfBall.h
+//
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/EngineTypes.h"
 #include "Delegates/DelegateCombinations.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "VRGolfBall.generated.h"
 
 UENUM(BlueprintType)
@@ -56,6 +59,20 @@ public:
 
     virtual void Tick(float DeltaTime) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    
+    // Audio Components — one per MetaSound Source
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Audio")
+    TObjectPtr<UAudioComponent> ImpactAudioComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Audio")
+    TObjectPtr<UAudioComponent> RollAudioComponent;
+
+    // Assets — assign these in BP_GolfBall defaults
+    UPROPERTY(EditDefaultsOnly, Category = "Audio")
+    TObjectPtr<USoundBase> ImpactMetaSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Audio")
+    TObjectPtr<USoundBase> RollMetaSound;
 
     // Ball control
     UFUNCTION(BlueprintCallable, Category = "Golf")
@@ -116,6 +133,19 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Golf|FloorProxy")
     TSubclassOf<AVRFloorProxy> FloorProxyClass;
+    
+    // Audio
+    void PlayImpactSound(float NormalizedSpeed);
+    void UpdateRollSound(float Speed);
+    void StopRollSound();
+
+    float MaxRollSpeed = 500.f; // tune this to your physics
+    
+    UFUNCTION()
+    void OnBallStruckAudio(AVRGolfBall* Ball, FVector HitForce);
+
+    UFUNCTION()
+    void OnBallStoppedAudio(AVRGolfBall* Ball);
 
 protected:
     virtual void BeginPlay() override;
@@ -238,7 +268,7 @@ protected:
     {
         OnBallHoled.Broadcast(this, CurrentStrokes, LastHoleReached);
     }
-    void BroadcasBallStruck(FVector Force)
+    void BroadcastBallStruck(FVector Force)
     {
         OnBallStruck.Broadcast(this, Force);
     }

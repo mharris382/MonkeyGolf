@@ -46,6 +46,15 @@ AVRGolfBall::AVRGolfBall()
     bDisableAirborneTimeout = false;
 
     FloorProxyClass = AVRFloorProxy::StaticClass(); // Safe default so it works out of the box
+    
+    // Audio
+    ImpactAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("ImpactAudio"));
+    ImpactAudioComponent->SetupAttachment(RootComponent);
+    ImpactAudioComponent->bAutoActivate = false;
+
+    RollAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("RollAudio"));
+    RollAudioComponent->SetupAttachment(RootComponent);
+    RollAudioComponent->bAutoActivate = false;
 }
 
 AVRFloorProxy* AVRGolfBall::GetFloorProxy()
@@ -93,6 +102,16 @@ void AVRGolfBall::BeginPlay()
     // Store initial position as last valid position
     LastValidPosition = GetActorLocation();
     LastPositionCheck = GetActorLocation();
+    
+    // Assign MetaSound assets
+    if (ImpactMetaSound)
+        ImpactAudioComponent->SetSound(ImpactMetaSound);
+    if (RollMetaSound)
+        RollAudioComponent->SetSound(RollMetaSound);
+
+    // Bind to existing delegates
+    OnBallStruck.AddDynamic(this, &AVRGolfBall::OnBallStruckAudio);
+    OnBallStopped.AddDynamic(this, &AVRGolfBall::OnBallStoppedAudio);
 }
 
 void AVRGolfBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -109,12 +128,16 @@ void AVRGolfBall::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Only run logic on server
-    if (!HasAuthority())
-        return;
+    if (HasAuthority())
+    {
+        UpdateBallState(DeltaTime);
+        PreventRampSleep();
+    }
 
-    UpdateBallState(DeltaTime);
-	PreventRampSleep();
+    // Drive roll audio from local velocity — no state check needed
+    // ReplicateMovement keeps this valid on all machines
+    float Speed = CollisionSphere->GetPhysicsLinearVelocity().Size();
+    UpdateRollSound(Speed);
 }
 
 void AVRGolfBall::UpdateBallState(float DeltaTime)
@@ -353,7 +376,7 @@ void AVRGolfBall::ApplyStroke(const FVector& ImpulseDirection, float ImpulseMagn
     OnStrokeApplied(Impulse, CurrentStrokes);
 
 	SetBallState(EBallState::InMotion);
-	BroadcasBallStruck(ImpulseDirection * ImpulseMagnitude);
+	BroadcastBallStruck(ImpulseDirection * ImpulseMagnitude);
     
     UE_LOG(LogTemp, Log, TEXT("Stroke applied! Impulse: %s, Magnitude: %.2f, Strokes: %d"), 
            *Impulse.ToString(), ImpulseMagnitude, CurrentStrokes);
@@ -484,7 +507,7 @@ void AVRGolfBall::OnRep_BallState()
     switch (CurrentState)
     {
         case EBallState::Idle:
-            // Visual feedback that ball is ready
+            StopRollSound(); // catch client-side stop
             break;
 
         case EBallState::InMotion:
@@ -499,4 +522,42 @@ void AVRGolfBall::OnRep_BallState()
             // Play reset VFX
             break;
     }
+}
+
+void AVRGolfBall::OnBallStruckAudio(AVRGolfBall* Ball, FVector HitForce)
+{
+    PlayImpactSound(FMath::Clamp(HitForce.Size() / 1600.f, 0.f, 1.f));
+}
+
+void AVRGolfBall::OnBallStoppedAudio(AVRGolfBall* Ball)
+{
+    StopRollSound();
+}
+
+void AVRGolfBall::PlayImpactSound(float NormalizedSpeed)
+{
+    if (!ImpactAudioComponent) return;
+    ImpactAudioComponent->SetFloatParameter(FName("HitSpeed"), NormalizedSpeed);
+    ImpactAudioComponent->Play();
+}
+
+void AVRGolfBall::UpdateRollSound(float Speed)
+{
+    if (!RollAudioComponent) return;
+
+    float Normalized = FMath::Clamp(Speed / MaxRollSpeed, 0.f, 1.f);
+    
+    UE_LOG(LogTemp, Warning, TEXT("UpdateRollSound: Speed=%.1f Normalized=%.3f IsPlaying=%d"),
+        Speed, Normalized, RollAudioComponent->IsPlaying());
+
+    if (!RollAudioComponent->IsPlaying() && Normalized > 0.01f)
+        RollAudioComponent->Play();
+
+    RollAudioComponent->SetFloatParameter(FName("RollSpeed"), Normalized);
+}
+
+void AVRGolfBall::StopRollSound()
+{
+    if (!RollAudioComponent) return;
+    RollAudioComponent->SetTriggerParameter(FName("Stop"));
 }

@@ -46,9 +46,14 @@ TArray<AVRGolfPlayerState*> AVRGolfGameState::GetSortedPlayersByScore() const
 void AVRGolfGameState::OnRep_CurrentHole()
 {
     UE_LOG(LogTemp, Log, TEXT("Game State: Now on hole %d of %d"), CurrentHoleNumber, TotalHoles);
-    
-    // This is where you'd update UI to show current hole
-    // Broadcast event for hole change
+    if (CurrentHoleNumber < TotalHoles)
+    {
+        OnHoleStarted.Broadcast(this, CurrentHoleNumber);
+    }
+    else
+    {
+        OnGameComplete.Broadcast(this);
+    }
 }
 
 void AVRGolfGameState::OnRep_CurrentTurn()
@@ -56,7 +61,6 @@ void AVRGolfGameState::OnRep_CurrentTurn()
     if (CurrentTurnPlayer)
     {
         UE_LOG(LogTemp, Log, TEXT("Game State: Current turn - %s"), *CurrentTurnPlayer->GetPlayerName());
+        OnPlayerTurnStarted.Broadcast(this, CurrentTurnPlayer);
     }
-    
-    // Update turn indicator UI
 }

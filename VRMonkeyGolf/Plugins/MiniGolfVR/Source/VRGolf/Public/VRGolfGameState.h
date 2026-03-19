@@ -3,7 +3,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "Delegates/DelegateCombinations.h"
 #include "VRGolfGameState.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameComplete, class AVRGolfGameState*, state);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHoleStarted, class AVRGolfGameState*, state, int, HoleNumber);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerTurnStarted, class AVRGolfGameState*, state, class AVRGolfPlayerState*, player);
 
 /**
  * Game state for VR Golf - tracks overall game progress
@@ -28,7 +33,16 @@ public:
 
     UPROPERTY(ReplicatedUsing = OnRep_CurrentTurn, BlueprintReadOnly, Category = "Golf")
     class AVRGolfPlayerState* CurrentTurnPlayer;
-
+    
+    UPROPERTY(BlueprintAssignable, Category = "GameState|Events")
+    FOnGameComplete OnGameComplete;
+    
+    UPROPERTY(BlueprintAssignable, Category = "GameState|Events")
+    FOnHoleStarted OnHoleStarted;
+    
+    UPROPERTY(BlueprintAssignable, Category = "GameState|Events")
+    FOnPlayerTurnStarted OnPlayerTurnStarted;
+    
     // Queries
     UFUNCTION(BlueprintPure, Category = "Golf")
     TArray<class AVRGolfPlayerState*> GetSortedPlayersByScore() const;
